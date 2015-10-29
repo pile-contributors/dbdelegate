@@ -8,12 +8,12 @@ set (DBDELEGATE_DEBUG_MSG ON)
 include(pile_support)
 
 # initialize this module
-macro    (dbdelegateInit
+macro    (DbDelegateInit
           ref_cnt_use_mode)
 
     # default name
     if (NOT DBDELEGATE_INIT_NAME)
-        set(DBDELEGATE_INIT_NAME "dbdelegate")
+        set(DBDELEGATE_INIT_NAME "DbDelegate")
     endif ()
 
     # compose the list of headers and sources
@@ -21,6 +21,8 @@ macro    (dbdelegateInit
         "dbdelegate.h")
     set(DBDELEGATE_SOURCES
         "dbdelegate.cc")
+    set(DBDELEGATE_QT_MODS
+        Widgets)
 
     pileSetSources(
         "${DBDELEGATE_INIT_NAME}"

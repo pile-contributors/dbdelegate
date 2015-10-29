@@ -3,5 +3,5 @@ if (NOT DBDELEGATE_BUILD_MODE)
 endif ()
 
 include(pile_support)
-pileInclude (dbdelegate)
-dbdelegateInit(${DBDELEGATE_BUILD_MODE})
+pileInclude (DbDelegate)
+DbDelegateInit(${DBDELEGATE_BUILD_MODE})

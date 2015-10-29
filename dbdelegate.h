@@ -1,6 +1,6 @@
 /**
  * @file dbdelegate.h
- * @brief Declarations for dbdelegate class
+ * @brief Declarations for DbDelegate class
  * @author Nicu Tofan <nicu.tofan@gmail.com>
  * @copyright Copyright 2014 piles contributors. All rights reserved.
  * This file is released under the
@@ -12,16 +12,18 @@
 
 #include <dbdelegate/dbdelegate-config.h>
 
-//! brief description
-class DBDELEGATE_EXPORT dbdelegate {
+#include <QStyledItemDelegate>
+
+//! Provides display and editing facilities for data items from a model
+class DBDELEGATE_EXPORT DbDelegate : public QStyledItemDelegate {
 
 public:
 
     //! Default constructor.
-    dbdelegate ();
+    DbDelegate ();
 
     //! Destructor.
-    virtual ~dbdelegate();
+    virtual ~DbDelegate();
 
 protected:
 

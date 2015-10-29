@@ -1,6 +1,6 @@
 /**
  * @file dbdelegate-private.h
- * @brief Declarations for dbdelegate class
+ * @brief Declarations for DbDelegate class
  * @author Nicu Tofan <nicu.tofan@gmail.com>
  * @copyright Copyright 2014 piles contributors. All rights reserved.
  * This file is released under the

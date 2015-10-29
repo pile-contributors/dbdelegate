@@ -1,6 +1,6 @@
 /**
  * @file dbdelegate.cc
- * @brief Definitions for dbdelegate class.
+ * @brief Definitions for DbDelegate class.
  * @author Nicu Tofan <nicu.tofan@gmail.com>
  * @copyright Copyright 2014 piles contributors. All rights reserved.
  * This file is released under the
@@ -11,7 +11,7 @@
 #include "dbdelegate-private.h"
 
 /**
- * @class dbdelegate
+ * @class DbDelegate
  *
  * Detailed description.
  */
@@ -20,7 +20,7 @@
 /**
  * Detailed description for constructor.
  */
-dbdelegate::dbdelegate()
+DbDelegate::DbDelegate()
 {
     DBDELEGATE_TRACE_ENTRY;
 
@@ -32,7 +32,7 @@ dbdelegate::dbdelegate()
 /**
  * Detailed description for destructor.
  */
-dbdelegate::~dbdelegate()
+DbDelegate::~DbDelegate()
 {
     DBDELEGATE_TRACE_ENTRY;
 
