@@ -8,7 +8,7 @@ set (DBDELEGATE_DEBUG_MSG ON)
 include(pile_support)
 
 # initialize this module
-macro    (DbDelegateInit
+macro    (dbdelegateInit
           ref_cnt_use_mode)
 
     # default name

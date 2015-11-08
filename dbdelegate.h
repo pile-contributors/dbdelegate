@@ -14,7 +14,7 @@
 
 #include <QStyledItemDelegate>
 
-//! Provides display and editing facilities for data items from a model
+//! Provides display and editing facilities for data items from a model.
 class DBDELEGATE_EXPORT DbDelegate : public QStyledItemDelegate {
 
 public:
@@ -25,7 +25,73 @@ public:
     //! Destructor.
     virtual ~DbDelegate();
 
+    //! Painting an item.
+    virtual void
+    paint(
+            QPainter *painter,
+            const QStyleOptionViewItem &option,
+            const QModelIndex &index) const;
+
+    //! The size needed by the delegate to display the item.
+    virtual QSize
+    sizeHint(
+            const QStyleOptionViewItem &option,
+            const QModelIndex &index) const;
+
+    //! Create a widget for editing a gived value.
+    virtual QWidget *
+    createEditor (
+            QWidget *parent,
+            const QStyleOptionViewItem &option,
+            const QModelIndex &index) const;
+
+    //! Sets the data to be displayed and edited from the model.
+    virtual void
+    setEditorData (
+            QWidget *editor,
+            const QModelIndex &index) const;
+
+    //! Gets data from the editor and stores it in the model.
+    virtual void
+    setModelData (
+            QWidget *editor,
+            QAbstractItemModel *model,
+            const QModelIndex &index) const;
+
+    //! Updates the editor for the item according to the style.
+    virtual void
+    updateEditorGeometry (
+            QWidget *editor,
+            const QStyleOptionViewItem &option,
+            const QModelIndex &index) const;
+
+    //! Last chance to change displayed text before actual paint.
+    virtual QString
+    displayText (
+            const QVariant & value,
+            const QLocale &locale) const;
+
 protected:
+
+    //! Initialize style options for an item.
+    virtual void
+    initStyleOption (
+            QStyleOptionViewItem *option,
+            const QModelIndex &index) const;
+
+    //! Filter out some events.
+    virtual bool
+    eventFilter (
+            QObject *object,
+            QEvent *event);
+
+    //! Start of editing and mouse events.
+    virtual bool
+    editorEvent (
+            QEvent *event,
+            QAbstractItemModel *model,
+            const QStyleOptionViewItem &option,
+            const QModelIndex &index);
 
 private:
 
