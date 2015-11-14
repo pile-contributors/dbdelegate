@@ -22,7 +22,7 @@ macro    (dbdelegateInit
     set(DBDELEGATE_SOURCES
         "dbdelegate.cc")
     set(DBDELEGATE_QT_MODS
-        Widgets)
+        Core Sql)
 
     pileSetSources(
         "${DBDELEGATE_INIT_NAME}"
