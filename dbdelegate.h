@@ -14,8 +14,35 @@
 
 #include <QStyledItemDelegate>
 
+QT_BEGIN_NAMESPACE
+class QTableView;
+class QAbstractItemModel;
+QT_END_NAMESPACE
+
+class DbTaew;
+
 //! Provides display and editing facilities for data items from a model.
 class DBDELEGATE_EXPORT DbDelegate : public QStyledItemDelegate {
+    Q_OBJECT
+
+public:
+
+    //! Sets all delegates for a table.
+    static bool
+    setAllDelegates (
+            QTableView * view);
+
+    //! Sets all delegates for a table.
+    static bool
+    setAllDelegates (
+            DbTaew * table,
+            QTableView * view);
+
+    //! Resets all delegates for a table.
+    static bool
+    resetAllDelegates (
+            QTableView * view);
+
 
 public:
 
@@ -94,6 +121,7 @@ protected:
             const QModelIndex &index);
 
 private:
+
 
 };
 
