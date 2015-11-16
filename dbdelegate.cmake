@@ -18,8 +18,10 @@ macro    (dbdelegateInit
 
     # compose the list of headers and sources
     set(DBDELEGATE_HEADERS
+        "dbdelegatemanager.h"
         "dbdelegate.h")
     set(DBDELEGATE_SOURCES
+        "dbdelegatemanager.cc"
         "dbdelegate.cc")
     set(DBDELEGATE_QT_MODS
         Core Sql)
