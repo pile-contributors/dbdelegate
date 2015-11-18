@@ -197,7 +197,11 @@ bool DbDelegate::setAllDelegates (DbTaew * table, QTableView * view)
         int i_max = table->columnCount();
         for (int i = 0; i < i_max; ++i) {
             DbColumn col = table->columnCtor (i);
+            if (col.isForeignKey()) {
 
+            } else {
+
+            }
 
 
 

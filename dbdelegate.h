@@ -11,6 +11,7 @@
 #define GUARD_DBDELEGATE_H_INCLUDE
 
 #include <dbdelegate/dbdelegate-config.h>
+#include <dbstruct/dbcolumn.h>
 
 #include <QStyledItemDelegate>
 
@@ -25,6 +26,7 @@ class DbTaew;
 class DBDELEGATE_EXPORT DbDelegate : public QStyledItemDelegate {
     Q_OBJECT
 
+    DbColumn column_;
 public:
 
     //! Sets all delegates for a table.

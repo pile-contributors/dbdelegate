@@ -83,7 +83,7 @@ public:
 
     //! Retreive icon marker.
     static const QIcon &
-    getIcon () const {
+    getIcon () {
         return uniq_->crt_icon_marker_;
     }
 
@@ -95,7 +95,7 @@ public:
 
     //! Retreive color marker.
     static const QColor &
-    getColor () const {
+    getColor () {
         return uniq_->crt_color_marker_;
     }
 
