@@ -49,7 +49,8 @@ public:
 public:
 
     //! Default constructor.
-    DbDelegate ();
+    DbDelegate (
+            QObject *parent = NULL);
 
     //! Destructor.
     virtual ~DbDelegate();

@@ -15,6 +15,10 @@
 #include <QMetaObject>
 #include <QTableView>
 #include <QAbstractItemModel>
+#include <QSqlTableModel>
+#include <QModelIndex>
+#include <QComboBox>
+#include <QSqlRecord>
 
 /**
  * @class DbDelegate
@@ -23,8 +27,8 @@
  */
 
 /* ------------------------------------------------------------------------- */
-DbDelegate::DbDelegate() :
-    QStyledItemDelegate ()
+DbDelegate::DbDelegate(QObject *parent) :
+    QStyledItemDelegate (parent)
 {
     DBDELEGATE_TRACE_ENTRY;
 
@@ -63,6 +67,12 @@ QSize DbDelegate::sizeHint (
     return result;
 }
 /* ========================================================================= */
+#include <QSpinBox>
+#include <QCheckBox>
+#include <QDateEdit>
+#include <QDateTimeEdit>
+#include <QDoubleSpinBox>
+#include <QLineEdit>
 
 /* ------------------------------------------------------------------------- */
 QWidget *DbDelegate::createEditor (
@@ -70,8 +80,143 @@ QWidget *DbDelegate::createEditor (
         const QModelIndex &index) const
 {
     DBDELEGATE_TRACE_ENTRY;
-    QWidget * result = QStyledItemDelegate::createEditor (
-                parent, option, index);
+    QWidget * result = NULL;
+    for (;;) {
+        // validate input
+        const DbModel * dbmod = qobject_cast<const DbModel *>(index.model ());
+        if (dbmod == NULL)
+            break;
+        if (!dbmod->isValid())
+            break;
+
+        // get data about this column
+        const DbModelCol & col_data = dbmod->columnData (index.column());
+        if (col_data.original_.read_only_) {
+            DBDELEGATE_DEBUGM("Read-only column requests editor");
+            return NULL;
+        }
+
+        if (col_data.isForeign()) {
+            // for foreign columns we always present a drop-down
+            if (!col_data.table_->isValid())
+                return NULL;
+            QComboBox *combo = new QComboBox (parent);
+            combo->setModel (col_data.table_->model);
+            combo->setModelColumn (col_data.t_display_);
+            result = combo;
+        } else {
+            switch (col_data.original_.datatype_) {
+            case DbColumn::DTY_IMAGE:
+            case DbColumn::DTY_ROWVERSION:
+            case DbColumn::DTY_HIERARCHYID:
+            case DbColumn::DTY_DECIMALSCALE:
+            case DbColumn::DTY_NUMERICSCALE:
+            case DbColumn::DTY_DATETIMEOFFSET:
+            case DbColumn::DTY_VARBINARY:
+            case DbColumn::DTY_BINARY: {
+                break; }
+
+            case DbColumn::DTY_BIGINT: {
+                QSpinBox * editor = new QSpinBox (parent);
+                editor->setMinimum (LONG_MIN);
+                editor->setMaximum (LONG_MAX);
+                editor->setValue (dbmod->data (index, Qt::EditRole).toLongLong());
+                result = editor;
+                break; }
+
+            case DbColumn::DTY_UNIQUEIDENTIFIER:
+            case DbColumn::DTY_INTEGER: {
+                QSpinBox * editor = new QSpinBox (parent);
+                editor->setMinimum (INT_MIN);
+                editor->setMaximum (INT_MAX);
+                editor->setValue (dbmod->data (index, Qt::EditRole).toInt());
+                result = editor;
+                break; }
+
+            case DbColumn::DTY_SMALLINT: {
+                QSpinBox * editor = new QSpinBox (parent);
+                editor->setMinimum (SHRT_MIN);
+                editor->setMaximum (SHRT_MAX);
+                editor->setValue (dbmod->data (index, Qt::EditRole).toInt());
+                result = editor;
+                break; }
+
+            case DbColumn::DTY_TINYINT: {
+                QSpinBox * editor = new QSpinBox (parent);
+                editor->setMinimum (SCHAR_MIN);
+                editor->setMaximum (SCHAR_MAX);
+                editor->setValue (dbmod->data (index, Qt::EditRole).toInt());
+                result = editor;
+                break; }
+
+            case DbColumn::DTY_BIT: {
+                QCheckBox * editor = new QCheckBox (parent);
+                editor->setChecked (dbmod->data (index, Qt::EditRole).toBool());
+                result = editor;
+                break; }
+
+            case DbColumn::DTY_TEXT:
+            case DbColumn::DTY_SQL:
+            case DbColumn::DTY_XML:
+            case DbColumn::DTY_VARCHAR:
+            case DbColumn::DTY_NCHAR:
+            case DbColumn::DTY_NVARCHAR:
+            case DbColumn::DTY_NTEXT:
+            case DbColumn::DTY_CHAR: {
+                QLineEdit * editor = new QLineEdit (parent);
+                editor->setText (dbmod->data (index, Qt::EditRole).toString());
+                if (col_data.original_.length_ > 0) {
+                    editor->setMaxLength (col_data.original_.length_);
+                }
+                result = editor;
+                break; }
+
+            case DbColumn::DTY_DATE: {
+                QDateEdit * editor = new QDateEdit (parent);
+                editor->setDate (dbmod->data (index, Qt::EditRole).toDate());
+                editor->setCalendarPopup (true);
+                // editor->setDisplayFormat ();
+                result = editor;
+                break; }
+
+            case DbColumn::DTY_TIME: {
+                QTimeEdit * editor = new QTimeEdit (parent);
+                editor->setTime (dbmod->data (index, Qt::EditRole).toTime ());
+                // editor->setDisplayFormat ();
+                result = editor;
+                break; }
+
+            case DbColumn::DTY_SMALLDATETIME:
+            case DbColumn::DTY_DATETIME2:
+            case DbColumn::DTY_DATETIME: {
+                QDateTimeEdit * editor = new QDateTimeEdit (parent);
+                editor->setDateTime (dbmod->data (index, Qt::EditRole).toDateTime());
+                editor->setCalendarPopup (true);
+                // editor->setDisplayFormat ();
+                result = editor;
+                break; }
+
+            case DbColumn::DTY_REAL:
+            case DbColumn::DTY_NUMERIC:
+            case DbColumn::DTY_MONEY:
+            case DbColumn::DTY_SMALLMONEY:
+            case DbColumn::DTY_DECIMAL:
+            case DbColumn::DTY_FLOAT: {
+                QDoubleSpinBox * editor = new QDoubleSpinBox (parent);
+                editor->setValue (dbmod->data (index, Qt::EditRole).toReal());
+                result = editor;
+                break; }
+            }
+        }
+
+        break;
+    }
+
+    if (result == NULL) {
+        result = QStyledItemDelegate::createEditor (
+                    parent, option, index);
+    }
+    result->installEventFilter (const_cast<DbDelegate *>(this));
     DBDELEGATE_TRACE_EXIT;
     return result;
 }
@@ -93,7 +238,50 @@ void DbDelegate::setModelData (
         const QModelIndex &index) const
 {
     DBDELEGATE_TRACE_ENTRY;
-    QStyledItemDelegate::setModelData (editor, model, index);
+    bool b_ret = false;
+    for (;;) {
+
+        // validate input
+        DbModel * dbmod = qobject_cast<DbModel *>(model);
+        if (dbmod == NULL)
+            break;
+        if (!dbmod->isValid())
+            break;
+
+        // get data about this column
+        const DbModelCol & col_data = dbmod->columnData (index.column());
+        if (col_data.original_.read_only_) {
+            DBDELEGATE_DEBUGM("Read-only column requests editor");
+            return;
+        }
+
+        if (col_data.isForeign()) {
+            // for foreign columns we always present a drop-down
+            if (!col_data.table_->isValid())
+                return;
+            QComboBox *combo = static_cast<QComboBox *>(editor);
+            QSqlRecord rec = col_data.table_->model->record (
+                        combo->currentIndex());
+//            dbmod->setData (
+//                        index, rec.value (col_data.t_display_), Qt::DisplayRole);
+            dbmod->setData (
+                        index, rec.value (col_data.t_primary_), Qt::EditRole);
+
+            b_ret = true;
+        } else {
+
+        }
+
+        // get new key from the related model
+
+
+        break;
+    }
+
+    if (!b_ret) {
+        QStyledItemDelegate::setModelData (editor, model, index);
+    }
+
     DBDELEGATE_TRACE_EXIT;
 }
 /* ========================================================================= */
@@ -202,19 +390,10 @@ bool DbDelegate::setAllDelegates (DbTaew * table, QTableView * view)
             } else {
 
             }
-
-
-
-
+            DbDelegate * delg = new DbDelegate();
             /** @todo */
 
-
-
-
-
-
-
-
+            view->setItemDelegateForColumn (i, delg);
         }
 
         b_ret = true;
