@@ -74,11 +74,11 @@ private:
 public:
 
     //! Initialize the manager
-    bool
+    static bool
     init ();
 
     //! Terminate the manager.
-    void
+    static void
     end ();
 
     //! Retreive icon marker.
