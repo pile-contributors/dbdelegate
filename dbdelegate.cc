@@ -19,12 +19,23 @@
 #include <QModelIndex>
 #include <QComboBox>
 #include <QSqlRecord>
+#include <QCoreApplication>
+
+#include <QSpinBox>
+#include <QCheckBox>
+#include <QDateEdit>
+#include <QDateTimeEdit>
+#include <QDoubleSpinBox>
+#include <QLineEdit>
+#include <QTextEdit>
 
 /**
  * @class DbDelegate
  *
  * .
  */
+
+static int min_combo_list_w = -1;
 
 /* ------------------------------------------------------------------------- */
 DbDelegate::DbDelegate(QObject *parent) :
@@ -67,12 +78,6 @@ QSize DbDelegate::sizeHint (
     return result;
 }
 /* ========================================================================= */
-#include <QSpinBox>
-#include <QCheckBox>
-#include <QDateEdit>
-#include <QDateTimeEdit>
-#include <QDoubleSpinBox>
-#include <QLineEdit>
 
 /* ------------------------------------------------------------------------- */
 QWidget *DbDelegate::createEditor (
@@ -96,15 +101,23 @@ QWidget *DbDelegate::createEditor (
             return NULL;
         }
 
+        QVariant value = dbmod->data (index, Qt::EditRole);
+
         if (col_data.isForeign()) {
             // for foreign columns we always present a drop-down
             if (!col_data.table_->isValid())
                 return NULL;
             QComboBox *combo = new QComboBox (parent);
-            combo->setModel (col_data.table_->model);
             combo->setModelColumn (col_data.t_display_);
+            if (min_combo_list_w == -1) {
+                QFontMetrics fm (combo->font());
+                min_combo_list_w = fm.width("ComboBox Here");
+            }
+            combo->view()->setMinimumWidth (min_combo_list_w);
+            setupControl (col_data, combo, value);
             result = combo;
         } else {
+
             switch (col_data.original_.datatype_) {
             case DbColumn::DTY_IMAGE:
             case DbColumn::DTY_ROWVERSION:
@@ -116,42 +129,21 @@ QWidget *DbDelegate::createEditor (
             case DbColumn::DTY_BINARY: {
                 break; }
 
-            case DbColumn::DTY_BIGINT: {
-                QSpinBox * editor = new QSpinBox (parent);
-                editor->setMinimum (LONG_MIN);
-                editor->setMaximum (LONG_MAX);
-                editor->setValue (dbmod->data (index, Qt::EditRole).toLongLong());
-                result = editor;
-                break; }
-
+            case DbColumn::DTY_BIGINT:
             case DbColumn::DTY_UNIQUEIDENTIFIER:
-            case DbColumn::DTY_INTEGER: {
-                QSpinBox * editor = new QSpinBox (parent);
-                editor->setMinimum (INT_MIN);
-                editor->setMaximum (INT_MAX);
-                editor->setValue (dbmod->data (index, Qt::EditRole).toInt());
-                result = editor;
-                break; }
-
-            case DbColumn::DTY_SMALLINT: {
-                QSpinBox * editor = new QSpinBox (parent);
-                editor->setMinimum (SHRT_MIN);
-                editor->setMaximum (SHRT_MAX);
-                editor->setValue (dbmod->data (index, Qt::EditRole).toInt());
-                result = editor;
-                break; }
-
+            case DbColumn::DTY_INTEGER:
+            case DbColumn::DTY_SMALLINT:
             case DbColumn::DTY_TINYINT: {
                 QSpinBox * editor = new QSpinBox (parent);
-                editor->setMinimum (SCHAR_MIN);
-                editor->setMaximum (SCHAR_MAX);
-                editor->setValue (dbmod->data (index, Qt::EditRole).toInt());
+                setupControl (col_data, editor, value);
                 result = editor;
                 break; }
 
             case DbColumn::DTY_BIT: {
-                QCheckBox * editor = new QCheckBox (parent);
-                editor->setChecked (dbmod->data (index, Qt::EditRole).toBool());
+                QCheckBox * editor = new QCheckBox (
+                            /*dbmod->data (index, Qt::DisplayRole).toString(),*/
+                            parent);
+                setupControl (col_data, editor, value);
                 result = editor;
                 break; }
 
@@ -164,25 +156,19 @@ QWidget *DbDelegate::createEditor (
             case DbColumn::DTY_NTEXT:
             case DbColumn::DTY_CHAR: {
                 QLineEdit * editor = new QLineEdit (parent);
-                editor->setText (dbmod->data (index, Qt::EditRole).toString());
-                if (col_data.original_.length_ > 0) {
-                    editor->setMaxLength (col_data.original_.length_);
-                }
+                setupControl (col_data, editor, value);
                 result = editor;
                 break; }
 
             case DbColumn::DTY_DATE: {
                 QDateEdit * editor = new QDateEdit (parent);
-                editor->setDate (dbmod->data (index, Qt::EditRole).toDate());
-                editor->setCalendarPopup (true);
-                // editor->setDisplayFormat ();
+                setupControl (col_data, editor, value);
                 result = editor;
                 break; }
 
             case DbColumn::DTY_TIME: {
                 QTimeEdit * editor = new QTimeEdit (parent);
-                editor->setTime (dbmod->data (index, Qt::EditRole).toTime ());
-                // editor->setDisplayFormat ();
+                setupControl (col_data, editor, value);
                 result = editor;
                 break; }
 
@@ -190,9 +176,7 @@ QWidget *DbDelegate::createEditor (
             case DbColumn::DTY_DATETIME2:
             case DbColumn::DTY_DATETIME: {
                 QDateTimeEdit * editor = new QDateTimeEdit (parent);
-                editor->setDateTime (dbmod->data (index, Qt::EditRole).toDateTime());
-                editor->setCalendarPopup (true);
-                // editor->setDisplayFormat ();
+                setupControl (col_data, editor, value);
                 result = editor;
                 break; }
 
@@ -203,7 +187,7 @@ QWidget *DbDelegate::createEditor (
             case DbColumn::DTY_DECIMAL:
             case DbColumn::DTY_FLOAT: {
                 QDoubleSpinBox * editor = new QDoubleSpinBox (parent);
-                editor->setValue (dbmod->data (index, Qt::EditRole).toReal());
+                setupControl (col_data, editor, value);
                 result = editor;
                 break; }
             }
@@ -441,3 +425,132 @@ bool DbDelegate::resetAllDelegates (QTableView * view)
     return b_ret;
 }
 /* ========================================================================= */
+
+/* ------------------------------------------------------------------------- */
+bool DbDelegate::setupControl (
+        const DbModelCol & col_data, QComboBox *control, const QVariant & value)
+{
+    return col_data.setCombo (control, value);
+}
+/* ========================================================================= */
+
+/* ------------------------------------------------------------------------- */
+bool DbDelegate::setupControl (
+        const DbModelCol & col_data, QSpinBox *control, const QVariant & value)
+{
+    switch (col_data.original_.datatype_) {
+    case DbColumn::DTY_BIGINT: {
+        control->setMinimum (LONG_MIN);
+        control->setMaximum (LONG_MAX);
+        control->setValue (value.toLongLong());
+        break; }
+
+    case DbColumn::DTY_UNIQUEIDENTIFIER:
+    case DbColumn::DTY_INTEGER: {
+        control->setMinimum (INT_MIN);
+        control->setMaximum (INT_MAX);
+        control->setValue (value.toInt());
+        break; }
+
+    case DbColumn::DTY_SMALLINT: {
+        control->setMinimum (SHRT_MIN);
+        control->setMaximum (SHRT_MAX);
+        control->setValue (value.toInt());
+        break; }
+    }
+
+    return true;
+}
+/* ========================================================================= */
+
+/* ------------------------------------------------------------------------- */
+bool DbDelegate::setupControl (
+        const DbModelCol & col_data, QDoubleSpinBox *control, const QVariant & value)
+{
+    control->setValue (value.toReal());
+    control->setMinimum (-DBL_MAX);
+    control->setMaximum (DBL_MAX);
+    if (!col_data.original_.original_format_.isEmpty()) {
+        control->setDecimals (col_data.original_.precision_);
+    }
+    return true;
+}
+/* ========================================================================= */
+
+/* ------------------------------------------------------------------------- */
+bool DbDelegate::setupControl (
+        const DbModelCol & col_data, QCheckBox *control, const QVariant & value)
+{
+    control->setChecked (value.toBool());
+    control->setAutoFillBackground (true);
+    return true;
+}
+/* ========================================================================= */
+
+/* ------------------------------------------------------------------------- */
+bool DbDelegate::setupControl (
+        const DbModelCol & col_data, QLineEdit *control, const QVariant & value)
+{
+    control->setText (value.toString());
+    if (col_data.original_.length_ > 0) {
+        control->setMaxLength (col_data.original_.length_);
+    }
+    if (!col_data.original_.original_format_.isEmpty()) {
+        control->setInputMask (col_data.original_.original_format_);
+    }
+    return true;
+}
+/* ========================================================================= */
+
+/* ------------------------------------------------------------------------- */
+bool DbDelegate::setupControl (
+        const DbModelCol & col_data, QTextEdit *control, const QVariant & value)
+{
+    control->setPlainText (value.toString());
+    return true;
+}
+/* ========================================================================= */
+
+/* ------------------------------------------------------------------------- */
+bool DbDelegate::setupControl (
+        const DbModelCol & col_data, QDateEdit *control, const QVariant & value)
+{
+    control->setDate (value.toDate());
+    control->setCalendarPopup (true);
+    // see [here](http://doc.qt.io/qt-5/qdatetime.html#toString)
+    control->setDisplayFormat (
+                QCoreApplication::translate(
+                    "UserTime", "yyyy-MMM-dd"));
+
+    return true;
+}
+/* ========================================================================= */
+
+/* ------------------------------------------------------------------------- */
+bool DbDelegate::setupControl (
+        const DbModelCol & col_data, QTimeEdit *control, const QVariant & value)
+{
+    control->setTime (value.toTime ());
+    // see [here](http://doc.qt.io/qt-5/qdatetime.html#toString)
+    control->setDisplayFormat (
+                QCoreApplication::translate(
+                    "UserTime", "h:m:s"));
+    return true;
+}
+/* ========================================================================= */
+
+/* ------------------------------------------------------------------------- */
+bool DbDelegate::setupControl (
+        const DbModelCol & col_data, QDateTimeEdit *control, const QVariant & value)
+{
+    control->setDateTime (value.toDateTime());
+    control->setCalendarPopup (true);
+    // see [here](http://doc.qt.io/qt-5/qdatetime.html#toString)
+    control->setDisplayFormat (
+                QCoreApplication::translate(
+                    "UserTime", "yyyy-MMM-dd h:m:s"));
+
+    return true;
+}
+/* ========================================================================= */
+

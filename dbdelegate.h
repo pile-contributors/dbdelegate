@@ -18,9 +18,19 @@
 QT_BEGIN_NAMESPACE
 class QTableView;
 class QAbstractItemModel;
+class QCheckBox;
+class QComboBox;
+class QDateEdit;
+class QDateTimeEdit;
+class QDoubleSpinBox;
+class QLineEdit;
+class QSpinBox;
+class QTimeEdit;
+class QTextEdit;
 QT_END_NAMESPACE
 
 class DbTaew;
+class DbModelCol;
 
 //! Provides display and editing facilities for data items from a model.
 class DBDELEGATE_EXPORT DbDelegate : public QStyledItemDelegate {
@@ -100,6 +110,73 @@ public:
     displayText (
             const QVariant & value,
             const QLocale &locale) const;
+
+
+public:
+
+    /*  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  */
+    /** @name Control SetUp
+     *  Prepare controls to be used according to their type.
+     */
+    ///@{
+
+    static bool
+    setupControl (
+            const DbModelCol & col_data,
+            QCheckBox *control,
+            const QVariant & value);
+
+    static bool
+    setupControl (
+            const DbModelCol & col_data,
+            QComboBox *control,
+            const QVariant & value);
+
+    static bool
+    setupControl (
+            const DbModelCol & col_data,
+            QDateEdit *control,
+            const QVariant & value);
+
+    static bool
+    setupControl (
+            const DbModelCol & col_data,
+            QDateTimeEdit *control,
+            const QVariant & value);
+
+    static bool
+    setupControl (
+            const DbModelCol & col_data,
+            QDoubleSpinBox *control,
+            const QVariant & value);
+
+    static bool
+    setupControl (
+            const DbModelCol & col_data,
+            QLineEdit *control,
+            const QVariant & value);
+
+    static bool
+    setupControl (
+            const DbModelCol & col_data,
+            QSpinBox *control,
+            const QVariant & value);
+
+    static bool
+    setupControl (
+            const DbModelCol & col_data,
+            QTimeEdit *control,
+            const QVariant & value);
+
+    static bool
+    setupControl (
+            const DbModelCol & col_data,
+            QTextEdit *control,
+            const QVariant & value);
+
+    ///@}
+    /*  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  */
+
 
 protected:
 
