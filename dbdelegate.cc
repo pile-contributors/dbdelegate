@@ -97,7 +97,7 @@ QWidget *DbDelegate::createEditor (
         // get data about this column
         const DbModelCol & col_data = dbmod->columnData (index.column());
         if (col_data.original_.read_only_) {
-            DBDELEGATE_DEBUGM("Read-only column requests editor");
+            DBDELEGATE_DEBUGM("Read-only column requests editor\n");
             return NULL;
         }
 
@@ -108,13 +108,12 @@ QWidget *DbDelegate::createEditor (
             if (!col_data.table_->isValid())
                 return NULL;
             QComboBox *combo = new QComboBox (parent);
-            combo->setModelColumn (col_data.t_display_);
+            setupControl (col_data, combo, value);
             if (min_combo_list_w == -1) {
                 QFontMetrics fm (combo->font());
                 min_combo_list_w = fm.width("ComboBox Here");
             }
             combo->view()->setMinimumWidth (min_combo_list_w);
-            setupControl (col_data, combo, value);
             result = combo;
         } else {
 
@@ -235,30 +234,20 @@ void DbDelegate::setModelData (
         // get data about this column
         const DbModelCol & col_data = dbmod->columnData (index.column());
         if (col_data.original_.read_only_) {
-            DBDELEGATE_DEBUGM("Read-only column requests editor");
+            DBDELEGATE_DEBUGM("Read-only column requests editor\n");
             return;
         }
 
         if (col_data.isForeign()) {
             // for foreign columns we always present a drop-down
-            if (!col_data.table_->isValid())
-                return;
             QComboBox *combo = static_cast<QComboBox *>(editor);
-            QSqlRecord rec = col_data.table_->model->record (
-                        combo->currentIndex());
-//            dbmod->setData (
-//                        index, rec.value (col_data.t_display_), Qt::DisplayRole);
-            dbmod->setData (
-                        index, rec.value (col_data.t_primary_), Qt::EditRole);
+            if (!col_data.getComboValue (index, dbmod, combo))
+                return;
 
             b_ret = true;
-        } else {
-
         }
 
-        // get new key from the related model
-
-
+        // default processing
         break;
     }
 
@@ -343,7 +332,7 @@ bool DbDelegate::setAllDelegates (QTableView * view)
     for (;;) {
         DbModel * dbmod = qobject_cast<DbModel *>(view->model ());
         if (dbmod == NULL) {
-            DBDELEGATE_DEBUGM("Instamce is not a DbModel; is a %s",
+            DBDELEGATE_DEBUGM("Instamce is not a DbModel; is a %s\n",
                               view->model ()->staticMetaObject.className());
             break;
         }
@@ -362,7 +351,7 @@ bool DbDelegate::setAllDelegates (DbTaew * table, QTableView * view)
     bool b_ret = false;
     for (;;) {
         if (table == NULL) {
-            DBDELEGATE_DEBUGM("A table must be provided");
+            DBDELEGATE_DEBUGM("A table must be provided\n");
             break;
         }
 
@@ -403,7 +392,7 @@ bool DbDelegate::resetAllDelegates (QTableView * view)
     for (;;) {
         DbModel * dbmod = qobject_cast<DbModel *>(view->model());
         if (dbmod == NULL) {
-            DBDELEGATE_DEBUGM("Instamce is not a DbModel; is a %s",
+            DBDELEGATE_DEBUGM("Instamce is not a DbModel; is a %s\n",
                               view->model()->staticMetaObject.className());
             break;
         }
