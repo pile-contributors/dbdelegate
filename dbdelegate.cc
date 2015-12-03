@@ -138,6 +138,7 @@ QWidget *DbDelegate::createEditor (
                 result = editor;
                 break; }
 
+            case DbColumn::DTY_TRISTATE:
             case DbColumn::DTY_BIT: {
                 QCheckBox * editor = new QCheckBox (
                             /*dbmod->data (index, Qt::DisplayRole).toString(),*/
@@ -236,6 +237,18 @@ void DbDelegate::setModelData (
         if (col_data.original_.read_only_) {
             DBDELEGATE_DEBUGM("Read-only column requests editor\n");
             return;
+        }
+
+        if (col_data.original_.datatype_ == DbColumn::DTY_TRISTATE) {
+            if (!col_data.getTristateValue (
+                        index, dbmod,
+                        qobject_cast<QCheckBox*>(editor))) {
+                DBDELEGATE_DEBUGM("Failed to save check-box in tristate\n");
+                return;
+            }
+
+            b_ret = true;
+            break;
         }
 
         if (col_data.isForeign()) {
@@ -446,6 +459,15 @@ bool DbDelegate::setupControl (
         control->setMaximum (SHRT_MAX);
         control->setValue (value.toInt());
         break; }
+
+    case DbColumn::DTY_TINYINT: {
+        control->setMinimum (CHAR_MIN);
+        control->setMaximum (CHAR_MAX);
+        control->setValue (value.toInt());
+        break; }
+
+    default:
+        control->setValue (value.toInt());
     }
 
     return true;
@@ -470,7 +492,12 @@ bool DbDelegate::setupControl (
 bool DbDelegate::setupControl (
         const DbModelCol & col_data, QCheckBox *control, const QVariant & value)
 {
-    control->setChecked (value.toBool());
+    if (col_data.original_.datatype_ == DbColumn::DTY_TRISTATE) {
+        col_data.setTristate (control, value, true);
+    } else {
+        control->setTristate (false);
+        control->setChecked (value.toBool());
+    }
     control->setAutoFillBackground (true);
     return true;
 }
@@ -523,7 +550,7 @@ bool DbDelegate::setupControl (
     // see [here](http://doc.qt.io/qt-5/qdatetime.html#toString)
     control->setDisplayFormat (
                 QCoreApplication::translate(
-                    "UserTime", "h:m:s"));
+                    "UserTime", "h:mm:ss"));
     return true;
 }
 /* ========================================================================= */
@@ -537,7 +564,7 @@ bool DbDelegate::setupControl (
     // see [here](http://doc.qt.io/qt-5/qdatetime.html#toString)
     control->setDisplayFormat (
                 QCoreApplication::translate(
-                    "UserTime", "yyyy-MMM-dd h:m:s"));
+                    "UserTime", "yyyy-MMM-dd h:mm:ss"));
 
     return true;
 }
