@@ -88,7 +88,7 @@ QWidget *DbDelegate::createEditor (
     QWidget * result = NULL;
     for (;;) {
         // validate input
-        const DbModel * dbmod = qobject_cast<const DbModel *>(index.model ());
+        const DbModel * dbmod = dbModelConst (index);
         if (dbmod == NULL)
             break;
         if (!dbmod->isValid())
@@ -101,7 +101,7 @@ QWidget *DbDelegate::createEditor (
             return NULL;
         }
 
-        QVariant value = dbmod->data (index, Qt::EditRole);
+        QVariant value = getData (index, Qt::EditRole);
 
         if (col_data.isForeign()) {
             // for foreign columns we always present a drop-down
@@ -143,6 +143,7 @@ QWidget *DbDelegate::createEditor (
                 QCheckBox * editor = new QCheckBox (
                             /*dbmod->data (index, Qt::DisplayRole).toString(),*/
                             parent);
+                connect(editor, SIGNAL(stateChanged(int)), this, SLOT(fucker(int)));
                 setupControl (col_data, editor, value);
                 result = editor;
                 break; }
@@ -206,12 +207,18 @@ QWidget *DbDelegate::createEditor (
 }
 /* ========================================================================= */
 
+void DbDelegate::fucker (int i )
+{
+    Qt::CheckState sts = (Qt::CheckState)i;
+    int j = 0;
+}
+
 /* ------------------------------------------------------------------------- */
 void DbDelegate::setEditorData (
         QWidget *editor, const QModelIndex &index) const
 {
     DBDELEGATE_TRACE_ENTRY;
-    QStyledItemDelegate::setEditorData (editor, index);
+    //QStyledItemDelegate::setEditorData (editor, index);
     DBDELEGATE_TRACE_EXIT;
 }
 /* ========================================================================= */
@@ -226,14 +233,15 @@ void DbDelegate::setModelData (
     for (;;) {
 
         // validate input
-        DbModel * dbmod = qobject_cast<DbModel *>(model);
+        DbModel * dbmod = dbModel (index);
         if (dbmod == NULL)
             break;
         if (!dbmod->isValid())
             break;
 
+        QModelIndex mapped = mapIndex (index);
         // get data about this column
-        const DbModelCol & col_data = dbmod->columnData (index.column());
+        const DbModelCol & col_data = dbmod->columnData (mapped.column());
         if (col_data.original_.read_only_) {
             DBDELEGATE_DEBUGM("Read-only column requests editor\n");
             return;
@@ -241,7 +249,7 @@ void DbDelegate::setModelData (
 
         if (col_data.original_.datatype_ == DbColumn::DTY_TRISTATE) {
             if (!col_data.getTristateValue (
-                        index, dbmod,
+                        mapped, dbmod,
                         qobject_cast<QCheckBox*>(editor))) {
                 DBDELEGATE_DEBUGM("Failed to save check-box in tristate\n");
                 return;
@@ -254,7 +262,7 @@ void DbDelegate::setModelData (
         if (col_data.isForeign()) {
             // for foreign columns we always present a drop-down
             QComboBox *combo = static_cast<QComboBox *>(editor);
-            if (!col_data.getComboValue (index, dbmod, combo))
+            if (!col_data.getComboValue (mapped, dbmod, combo))
                 return;
 
             b_ret = true;
@@ -376,7 +384,7 @@ bool DbDelegate::setAllDelegates (DbTaew * table, QTableView * view)
             } else {
 
             }
-            DbDelegate * delg = new DbDelegate();
+            DbDelegate * delg = new DbDelegate(view);
             /** @todo */
 
             view->setItemDelegateForColumn (i, delg);
@@ -570,3 +578,25 @@ bool DbDelegate::setupControl (
 }
 /* ========================================================================= */
 
+/* ------------------------------------------------------------------------- */
+const DbModel * DbDelegate::dbModelConst (const QModelIndex &index) const
+{
+    return qobject_cast<const DbModel *>(index.model ());
+}
+/* ========================================================================= */
+
+/* ------------------------------------------------------------------------- */
+DbModel * DbDelegate::dbModel (const QModelIndex &index) const
+{
+    const DbModel * fakery = qobject_cast<const DbModel *>(index.model ());
+    return (DbModel*)fakery;
+}
+/* ========================================================================= */
+
+/* ------------------------------------------------------------------------- */
+QVariant DbDelegate::getData (const QModelIndex &index, int role) const
+{
+    const DbModel * dbmod = dbModel (index);
+    return dbmod->data (index, role);
+}
+/* ========================================================================= */

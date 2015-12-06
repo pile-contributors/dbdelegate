@@ -30,6 +30,7 @@ class QTextEdit;
 QT_END_NAMESPACE
 
 class DbTaew;
+class DbModel;
 class DbModelCol;
 
 //! Provides display and editing facilities for data items from a model.
@@ -55,6 +56,24 @@ public:
     resetAllDelegates (
             QTableView * view);
 
+    virtual const DbModel *
+    dbModelConst (
+            const QModelIndex &index) const;
+
+    virtual DbModel *
+    dbModel (
+            const QModelIndex &index) const;
+
+    virtual QVariant
+    getData (
+            const QModelIndex &index,
+            int role) const;
+
+    virtual QModelIndex
+    mapIndex (
+        const QModelIndex & idx) const {
+        return idx;
+    }
 
 public:
 
@@ -200,8 +219,9 @@ protected:
             const QStyleOptionViewItem &option,
             const QModelIndex &index);
 
-private:
+private slots:
 
+    void fucker (int i );
 
 };
 
