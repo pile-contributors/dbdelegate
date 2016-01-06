@@ -78,7 +78,7 @@ public:
 public:
 
     //! Default constructor.
-    DbDelegate (
+    explicit DbDelegate (
             QObject *parent = NULL);
 
     //! Destructor.
@@ -219,10 +219,7 @@ protected:
             const QStyleOptionViewItem &option,
             const QModelIndex &index);
 
-private slots:
-
-    void fucker (int i );
-
+public: virtual void anchorVtable() const;
 };
 
 #endif // GUARD_DBDELEGATE_H_INCLUDE

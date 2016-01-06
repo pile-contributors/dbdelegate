@@ -143,7 +143,6 @@ QWidget *DbDelegate::createEditor (
                 QCheckBox * editor = new QCheckBox (
                             /*dbmod->data (index, Qt::DisplayRole).toString(),*/
                             parent);
-                connect(editor, SIGNAL(stateChanged(int)), this, SLOT(fucker(int)));
                 setupControl (col_data, editor, value);
                 result = editor;
                 break; }
@@ -207,15 +206,9 @@ QWidget *DbDelegate::createEditor (
 }
 /* ========================================================================= */
 
-void DbDelegate::fucker (int i )
-{
-    Qt::CheckState sts = (Qt::CheckState)i;
-    int j = 0;
-}
-
 /* ------------------------------------------------------------------------- */
 void DbDelegate::setEditorData (
-        QWidget *editor, const QModelIndex &index) const
+        QWidget */*editor*/, const QModelIndex &/*index*/) const
 {
     DBDELEGATE_TRACE_ENTRY;
     //QStyledItemDelegate::setEditorData (editor, index);
@@ -452,7 +445,7 @@ bool DbDelegate::setupControl (
     case DbColumn::DTY_BIGINT: {
         control->setMinimum (LONG_MIN);
         control->setMaximum (LONG_MAX);
-        control->setValue (value.toLongLong());
+        control->setValue (static_cast<int> (value.toLongLong()));
         break; }
 
     case DbColumn::DTY_UNIQUEIDENTIFIER:
@@ -484,7 +477,8 @@ bool DbDelegate::setupControl (
 
 /* ------------------------------------------------------------------------- */
 bool DbDelegate::setupControl (
-        const DbModelCol & col_data, QDoubleSpinBox *control, const QVariant & value)
+        const DbModelCol & col_data, QDoubleSpinBox *control,
+        const QVariant & value)
 {
     control->setValue (value.toReal());
     control->setMinimum (-DBL_MAX);
@@ -498,7 +492,8 @@ bool DbDelegate::setupControl (
 
 /* ------------------------------------------------------------------------- */
 bool DbDelegate::setupControl (
-        const DbModelCol & col_data, QCheckBox *control, const QVariant & value)
+        const DbModelCol & col_data, QCheckBox *control,
+        const QVariant & value)
 {
     if (col_data.original_.datatype_ == DbColumn::DTY_TRISTATE) {
         col_data.setTristate (control, value, true);
@@ -513,7 +508,8 @@ bool DbDelegate::setupControl (
 
 /* ------------------------------------------------------------------------- */
 bool DbDelegate::setupControl (
-        const DbModelCol & col_data, QLineEdit *control, const QVariant & value)
+        const DbModelCol & col_data, QLineEdit *control,
+        const QVariant & value)
 {
     control->setText (value.toString());
     if (col_data.original_.length_ > 0) {
@@ -528,7 +524,8 @@ bool DbDelegate::setupControl (
 
 /* ------------------------------------------------------------------------- */
 bool DbDelegate::setupControl (
-        const DbModelCol & col_data, QTextEdit *control, const QVariant & value)
+        const DbModelCol & /*col_data*/, QTextEdit *control,
+        const QVariant & value)
 {
     control->setPlainText (value.toString());
     return true;
@@ -537,7 +534,8 @@ bool DbDelegate::setupControl (
 
 /* ------------------------------------------------------------------------- */
 bool DbDelegate::setupControl (
-        const DbModelCol & col_data, QDateEdit *control, const QVariant & value)
+        const DbModelCol & /*col_data*/, QDateEdit *control,
+        const QVariant & value)
 {
     control->setDate (value.toDate());
     control->setCalendarPopup (true);
@@ -552,7 +550,8 @@ bool DbDelegate::setupControl (
 
 /* ------------------------------------------------------------------------- */
 bool DbDelegate::setupControl (
-        const DbModelCol & col_data, QTimeEdit *control, const QVariant & value)
+        const DbModelCol & /*col_data*/, QTimeEdit *control,
+        const QVariant & value)
 {
     control->setTime (value.toTime ());
     // see [here](http://doc.qt.io/qt-5/qdatetime.html#toString)
@@ -565,7 +564,8 @@ bool DbDelegate::setupControl (
 
 /* ------------------------------------------------------------------------- */
 bool DbDelegate::setupControl (
-        const DbModelCol & col_data, QDateTimeEdit *control, const QVariant & value)
+        const DbModelCol & /*col_data*/, QDateTimeEdit *control,
+        const QVariant & value)
 {
     control->setDateTime (value.toDateTime());
     control->setCalendarPopup (true);
@@ -589,7 +589,7 @@ const DbModel * DbDelegate::dbModelConst (const QModelIndex &index) const
 DbModel * DbDelegate::dbModel (const QModelIndex &index) const
 {
     const DbModel * fakery = qobject_cast<const DbModel *>(index.model ());
-    return (DbModel*)fakery;
+    return const_cast<DbModel*>(fakery);
 }
 /* ========================================================================= */
 
@@ -600,3 +600,5 @@ QVariant DbDelegate::getData (const QModelIndex &index, int role) const
     return dbmod->data (index, role);
 }
 /* ========================================================================= */
+
+void DbDelegate::anchorVtable() const {}
