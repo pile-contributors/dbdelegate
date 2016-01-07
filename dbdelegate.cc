@@ -208,7 +208,7 @@ QWidget *DbDelegate::createEditor (
 
 /* ------------------------------------------------------------------------- */
 void DbDelegate::setEditorData (
-        QWidget */*editor*/, const QModelIndex &/*index*/) const
+        QWidget * /*editor*/, const QModelIndex &/*index*/) const
 {
     DBDELEGATE_TRACE_ENTRY;
     //QStyledItemDelegate::setEditorData (editor, index);
