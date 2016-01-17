@@ -11,6 +11,9 @@
 #include "dbdelegate-private.h"
 #include <dbmodel/dbmodel.h>
 #include <dbstruct/dbcolumn.h>
+#if DBSTRUCT_MAJOR_VERSION >= 1
+#include <dbstruct/dbdatatype.h>
+#endif
 
 #include <QMetaObject>
 #include <QTableView>
@@ -96,7 +99,7 @@ QWidget *DbDelegate::createEditor (
 
         // get data about this column
         const DbModelCol & col_data = dbmod->columnData (index.column());
-        if (col_data.original_.read_only_) {
+        if (col_data.original_.readOnly ()) {
             DBDELEGATE_DEBUGM("Read-only column requests editor\n");
             return NULL;
         }
@@ -117,29 +120,29 @@ QWidget *DbDelegate::createEditor (
             result = combo;
         } else {
 
-            switch (col_data.original_.datatype_) {
-            case DbColumn::DTY_IMAGE:
-            case DbColumn::DTY_ROWVERSION:
-            case DbColumn::DTY_HIERARCHYID:
-            case DbColumn::DTY_DECIMALSCALE:
-            case DbColumn::DTY_NUMERICSCALE:
-            case DbColumn::DTY_DATETIMEOFFSET:
-            case DbColumn::DTY_VARBINARY:
-            case DbColumn::DTY_BINARY: {
+            switch (col_data.original_.columnType ()) {
+            case DbDataType::DTY_IMAGE:
+            case DbDataType::DTY_ROWVERSION:
+            case DbDataType::DTY_HIERARCHYID:
+            case DbDataType::DTY_DECIMALSCALE:
+            case DbDataType::DTY_NUMERICSCALE:
+            case DbDataType::DTY_DATETIMEOFFSET:
+            case DbDataType::DTY_VARBINARY:
+            case DbDataType::DTY_BINARY: {
                 break; }
 
-            case DbColumn::DTY_BIGINT:
-            case DbColumn::DTY_UNIQUEIDENTIFIER:
-            case DbColumn::DTY_INTEGER:
-            case DbColumn::DTY_SMALLINT:
-            case DbColumn::DTY_TINYINT: {
+            case DbDataType::DTY_BIGINT:
+            case DbDataType::DTY_UNIQUEIDENTIFIER:
+            case DbDataType::DTY_INTEGER:
+            case DbDataType::DTY_SMALLINT:
+            case DbDataType::DTY_TINYINT: {
                 QSpinBox * editor = new QSpinBox (parent);
                 setupControl (col_data, editor, value);
                 result = editor;
                 break; }
 
-            case DbColumn::DTY_TRISTATE:
-            case DbColumn::DTY_BIT: {
+            case DbDataType::DTY_TRISTATE:
+            case DbDataType::DTY_BIT: {
                 QCheckBox * editor = new QCheckBox (
                             /*dbmod->data (index, Qt::DisplayRole).toString(),*/
                             parent);
@@ -147,45 +150,45 @@ QWidget *DbDelegate::createEditor (
                 result = editor;
                 break; }
 
-            case DbColumn::DTY_TEXT:
-            case DbColumn::DTY_SQL:
-            case DbColumn::DTY_XML:
-            case DbColumn::DTY_VARCHAR:
-            case DbColumn::DTY_NCHAR:
-            case DbColumn::DTY_NVARCHAR:
-            case DbColumn::DTY_NTEXT:
-            case DbColumn::DTY_CHAR: {
+            case DbDataType::DTY_TEXT:
+            case DbDataType::DTY_SQL:
+            case DbDataType::DTY_XML:
+            case DbDataType::DTY_VARCHAR:
+            case DbDataType::DTY_NCHAR:
+            case DbDataType::DTY_NVARCHAR:
+            case DbDataType::DTY_NTEXT:
+            case DbDataType::DTY_CHAR: {
                 QLineEdit * editor = new QLineEdit (parent);
                 setupControl (col_data, editor, value);
                 result = editor;
                 break; }
 
-            case DbColumn::DTY_DATE: {
+            case DbDataType::DTY_DATE: {
                 QDateEdit * editor = new QDateEdit (parent);
                 setupControl (col_data, editor, value);
                 result = editor;
                 break; }
 
-            case DbColumn::DTY_TIME: {
+            case DbDataType::DTY_TIME: {
                 QTimeEdit * editor = new QTimeEdit (parent);
                 setupControl (col_data, editor, value);
                 result = editor;
                 break; }
 
-            case DbColumn::DTY_SMALLDATETIME:
-            case DbColumn::DTY_DATETIME2:
-            case DbColumn::DTY_DATETIME: {
+            case DbDataType::DTY_SMALLDATETIME:
+            case DbDataType::DTY_DATETIME2:
+            case DbDataType::DTY_DATETIME: {
                 QDateTimeEdit * editor = new QDateTimeEdit (parent);
                 setupControl (col_data, editor, value);
                 result = editor;
                 break; }
 
-            case DbColumn::DTY_REAL:
-            case DbColumn::DTY_NUMERIC:
-            case DbColumn::DTY_MONEY:
-            case DbColumn::DTY_SMALLMONEY:
-            case DbColumn::DTY_DECIMAL:
-            case DbColumn::DTY_FLOAT: {
+            case DbDataType::DTY_REAL:
+            case DbDataType::DTY_NUMERIC:
+            case DbDataType::DTY_MONEY:
+            case DbDataType::DTY_SMALLMONEY:
+            case DbDataType::DTY_DECIMAL:
+            case DbDataType::DTY_FLOAT: {
                 QDoubleSpinBox * editor = new QDoubleSpinBox (parent);
                 setupControl (col_data, editor, value);
                 result = editor;
@@ -235,12 +238,12 @@ void DbDelegate::setModelData (
         QModelIndex mapped = mapIndex (index);
         // get data about this column
         const DbModelCol & col_data = dbmod->columnData (mapped.column());
-        if (col_data.original_.read_only_) {
+        if (col_data.original_.readOnly ()) {
             DBDELEGATE_DEBUGM("Read-only column requests editor\n");
             return;
         }
 
-        if (col_data.original_.datatype_ == DbColumn::DTY_TRISTATE) {
+        if (col_data.original_.columnType () == DbDataType::DTY_TRISTATE) {
             if (!col_data.getTristateValue (
                         mapped, dbmod,
                         qobject_cast<QCheckBox*>(editor))) {
@@ -441,27 +444,27 @@ bool DbDelegate::setupControl (
 bool DbDelegate::setupControl (
         const DbModelCol & col_data, QSpinBox *control, const QVariant & value)
 {
-    switch (col_data.original_.datatype_) {
-    case DbColumn::DTY_BIGINT: {
+    switch (col_data.original_.columnType ()) {
+    case DbDataType::DTY_BIGINT: {
         control->setMinimum (LONG_MIN);
         control->setMaximum (LONG_MAX);
         control->setValue (static_cast<int> (value.toLongLong()));
         break; }
 
-    case DbColumn::DTY_UNIQUEIDENTIFIER:
-    case DbColumn::DTY_INTEGER: {
+    case DbDataType::DTY_UNIQUEIDENTIFIER:
+    case DbDataType::DTY_INTEGER: {
         control->setMinimum (INT_MIN);
         control->setMaximum (INT_MAX);
         control->setValue (value.toInt());
         break; }
 
-    case DbColumn::DTY_SMALLINT: {
+    case DbDataType::DTY_SMALLINT: {
         control->setMinimum (SHRT_MIN);
         control->setMaximum (SHRT_MAX);
         control->setValue (value.toInt());
         break; }
 
-    case DbColumn::DTY_TINYINT: {
+    case DbDataType::DTY_TINYINT: {
         control->setMinimum (CHAR_MIN);
         control->setMaximum (CHAR_MAX);
         control->setValue (value.toInt());
@@ -495,7 +498,7 @@ bool DbDelegate::setupControl (
         const DbModelCol & col_data, QCheckBox *control,
         const QVariant & value)
 {
-    if (col_data.original_.datatype_ == DbColumn::DTY_TRISTATE) {
+    if (col_data.original_.columnType () == DbDataType::DTY_TRISTATE) {
         col_data.setTristate (control, value, true);
     } else {
         control->setTristate (false);
