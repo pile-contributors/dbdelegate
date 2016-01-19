@@ -146,10 +146,10 @@ public:
             const QVariant & value);
 
     static bool
-    setupControl (
-            const DbModelCol & col_data,
+    setupControl (const DbModelCol & col_data,
             QComboBox *control,
-            const QVariant & value);
+            const QVariant & value,
+            bool b_delegate_enh = true);
 
     static bool
     setupControl (

@@ -434,9 +434,10 @@ bool DbDelegate::resetAllDelegates (QTableView * view)
 
 /* ------------------------------------------------------------------------- */
 bool DbDelegate::setupControl (
-        const DbModelCol & col_data, QComboBox *control, const QVariant & value)
+        const DbModelCol & col_data, QComboBox *control,
+        const QVariant & value, bool b_delegate_enh)
 {
-    return col_data.setCombo (control, value);
+    return col_data.setCombo (control, value, b_delegate_enh);
 }
 /* ========================================================================= */
 
