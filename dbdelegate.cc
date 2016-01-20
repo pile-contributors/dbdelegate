@@ -82,6 +82,47 @@ QSize DbDelegate::sizeHint (
 }
 /* ========================================================================= */
 
+
+class Resolve99Bug : public QDoubleSpinBox {
+    // This is a workaround a bug that prevents me from setting the range
+    // for QDoubleSpinBox control when used in a table
+    // The range gets reset to 0-99 and I just can't tell why.
+    // This control will fire a delayed event to set the values.
+public:
+
+    double min_;
+    double max_;
+    int digits_;
+    double value_;
+    int timer_id_;
+
+    Resolve99Bug (QWidget * parent) : QDoubleSpinBox (parent),
+        min_ (-999999999999.99),
+        max_(999999999999.99),
+        digits_(3),
+        value_(0.0),
+        timer_id_(startTimer (100))
+    {
+    }
+
+    void timerEvent (QTimerEvent * event) {
+        if (event->timerId() == timer_id_) {
+            setAll ();
+            killTimer (timer_id_);
+            timer_id_ = -1;
+        } else {
+            QDoubleSpinBox::timerEvent (event);
+        }
+    }
+
+    void setAll () {
+        setDecimals (digits_);
+        setMinimum (min_);
+        setMaximum (max_);
+        setValue (value_);
+    }
+};
+
 /* ------------------------------------------------------------------------- */
 QWidget *DbDelegate::createEditor (
         QWidget *parent, const QStyleOptionViewItem &option,
@@ -189,7 +230,7 @@ QWidget *DbDelegate::createEditor (
             case DbDataType::DTY_SMALLMONEY:
             case DbDataType::DTY_DECIMAL:
             case DbDataType::DTY_FLOAT: {
-                QDoubleSpinBox * editor = new QDoubleSpinBox (parent);
+                Resolve99Bug * editor = new Resolve99Bug (parent);
                 setupControl (col_data, editor, value);
                 result = editor;
                 break; }
@@ -485,11 +526,29 @@ bool DbDelegate::setupControl (
         const QVariant & value)
 {
     control->setValue (value.toReal());
-    control->setMinimum (-DBL_MAX);
-    control->setMaximum (DBL_MAX);
+    control->setRange(-9999999999999999999.99, 9999999999999999999.99);
     if (!col_data.original_.original_format_.isEmpty()) {
         control->setDecimals (col_data.original_.precision_);
     }
+    return true;
+}
+/* ========================================================================= */
+
+/* ------------------------------------------------------------------------- */
+bool DbDelegate::setupControl (
+        const DbModelCol & col_data, Resolve99Bug *control,
+        const QVariant & value)
+{
+    control->value_ = value.toReal();
+    control->min_ = -9999999999999999999.99;
+    control->max_ = 9999999999999999999.99;
+    if (!col_data.original_.original_format_.isEmpty()) {
+        control->digits_ = col_data.original_.precision_;
+    } else {
+        control->digits_ = 2;
+    }
+    control->setAll ();
+    // the control will fire a delayed event to set these
     return true;
 }
 /* ========================================================================= */

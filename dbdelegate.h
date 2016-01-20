@@ -32,6 +32,7 @@ QT_END_NAMESPACE
 class DbTaew;
 class DbModel;
 class DbModelCol;
+class Resolve99Bug;
 
 //! Provides display and editing facilities for data items from a model.
 class DBDELEGATE_EXPORT DbDelegate : public QStyledItemDelegate {
@@ -192,6 +193,12 @@ public:
             const DbModelCol & col_data,
             QTextEdit *control,
             const QVariant & value);
+
+    static bool
+    setupControl (
+            const DbModelCol &col_data,
+            Resolve99Bug *control,
+            const QVariant &value);
 
     ///@}
     /*  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  */
